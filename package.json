@@ -1,0 +1,29 @@
+{
+  "name": "mmm-gptcore",
+  "version": "1.0.0",
+  "description": "MagicMirror module for using OpenAI Assistant API",
+  "main": "MMM-GPTCore.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MMRIZE/MMM-GPTCore.git"
+  },
+  "keywords": [
+    "MagicMirror",
+    "GPT",
+    "Assistant",
+    "OpenAI"
+  ],
+  "author": "eouia0819@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MMRIZE/MMM-GPTCore/issues"
+  },
+  "homepage": "https://github.com/MMRIZE/MMM-GPTCore#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "openai": "^4.47.2"
+  }
+}
