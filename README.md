@@ -1,1 +1,1 @@
-# MMM-GPTCore
+# MMM-GPTAssistant

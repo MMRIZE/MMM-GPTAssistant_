@@ -1,4 +1,4 @@
-Module.register("MMM-GPT", {
+Module.register("MMM-GPTAssistant", {
   defaults: {
     secureVectorStores: [],
     mainAssistantId: 'asst_7dIGXATJ3ao5SNtAjnPi5BMu',
@@ -23,7 +23,7 @@ Module.register("MMM-GPT", {
   },
 
   onInitialized: function (payload) {
-    Log.log(`[GPT] OpenAI API Initialized`)
+    Log.log(`[GPTA] OpenAI API Initialized`)
     //this.sendNotification('GPT_API_READY')
     const tools = []
     this.functionCalls.forEach(({ name, description, parameters }) => {
@@ -53,11 +53,11 @@ Module.register("MMM-GPT", {
       this.sendNotification(requested.notification, { ...requested.payload, error, response })
       this.requestedNotifications.delete(notificationId)
     }
-    Log.log(`[GPT] Request Failed: `, error)
+    Log.log(`[GPTA] Request Failed: `, error)
   },
 
   onUpdateMainAssistantSuccess: function () {
-    Log.log(`[GPT] Main Assistant Updated. Now ready to assist!`)
+    Log.log(`[GPTA] Main Assistant Updated. Now ready to assist!`)
     this.sendNotification('GPT_READY')
     /* test */
     this.test()
@@ -154,11 +154,11 @@ Module.register("MMM-GPT", {
         try {
           const { functionCalls } = await import(mjs)
           functionCalls.forEach((f) => {
-            Log.log(`[GPT] Loaded function call: ${f.name} from ${name}`)
+            Log.log(`[GPTA] Loaded function call: ${f.name} from ${name}`)
             this.functionCalls.set(f.name, f)
           })
         } catch (error) {
-          Log.log(`[GPT] Error loading function calls: ${name}`, error.toString())
+          Log.log(`[GPTA] Error loading function calls: ${name}`, error.toString())
         }
       })
     }
@@ -167,7 +167,7 @@ Module.register("MMM-GPT", {
     MM.getModules().forEach((m) => {
       if (m.config?.functionCalls) {
         m.config.functionCalls.forEach((f) => {
-          Log.log(`[GPT] Loaded function call: ${f.name} from ${m.name}`)
+          Log.log(`[GPTA] Loaded function call: ${f.name} from ${m.name}`)
           this.functionCalls.set(f.name, f)
         })
       }
