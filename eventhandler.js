@@ -17,11 +17,11 @@ class EventHandler extends EventEmitter {
       return await functionCall(id, payload)
     }
     this.onFinish = () => {
-      console.log('[GPTA] Finish Run', this.result?.error || this.result?.response[0])
+      console.log('[GPT] Finish Run', this.result?.error || this.result?.response[0])
       return onFinish(this.result, this.threadId, this.instant)
     }
     this.statusReport = (status) => {
-      console.log('[GPTA] Process:', status)
+      console.log('[GPT] Process:', status)
       return statusReport(status)
     }
   }
@@ -50,12 +50,12 @@ class EventHandler extends EventEmitter {
       }
 
       if (event.event === 'thread.run.failed') {
-        console.log(`[GPTA] Run failed: `, event.data)
+        console.log(`[GPT] Run failed: `, event.data)
         this.result.error = event.data.error
         this.onFinish()
       }
     } catch (error) {
-      console.log(`[GPTA] Error: `, error.toString())
+      console.log(`[GPT] Error: `, error.toString())
       console.error(error)
       this.result.error = error
       this.onFinish()
@@ -66,7 +66,7 @@ class EventHandler extends EventEmitter {
     try {
       const toolOutputs = []
       for (const toolCall of data.required_action.submit_tool_outputs.tool_calls) {
-        console.log(`[GPTA] Processing tool call`, toolCall)
+        console.log(`[GPT] Processing tool call`, toolCall)
         if (toolCall.type !== "function") {
           continue
         }

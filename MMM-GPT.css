@@ -1,0 +1,48 @@
+.GPT .status {
+  font-size: 48px;
+  color: white;
+}
+
+.GPT .status::before {
+  content: url("https://api.iconify.design/tabler/brand-openai.svg?color=gray&width=48");
+}
+
+.GPT .status[data-status="thread.run.created"] {
+  color: greenyellow;
+}
+
+.GPT .status[data-status="thread.run.created"]::before {
+  content: url("https://api.iconify.design/line-md/loading-alt-loop.svg?color=greenyellow&width=48");
+}
+
+.GPT .status[data-status="thread.run.requires_action"] {
+  color: yellow;
+}
+
+.GPT .status[data-status="thread.run.requires_action"]::before {
+  content: url("https://api.iconify.design/line-md/compass-loop.svg?color=yellow&width=48");
+}
+
+.GPT .status[data-status="thread.message.created"] {
+  color: dodgerblue;
+}
+
+.GPT .status[data-status="thread.message.created"]::before {
+  content: url("https://api.iconify.design/line-md/loading-twotone-loop.svg?color=dodgerblue&width=48");
+}
+
+.GPT .status[data-status="thread.run.completed"] {
+  color: white;
+}
+
+.GPT .status[data-status="thread.run.completed"]::before {
+  content: url("https://api.iconify.design/line-md/coffee-twotone-loop.svg?color=white&width=48");
+}
+
+.GPT .status[data-status="thread.run.failed"] {
+  color: darkred;
+}
+
+.GPT .status[data-status="thread.run.failed"]::before {
+  content: url("https://api.iconify.design/line-md/alert-loop.svg?color=darkred&width=48");
+}
