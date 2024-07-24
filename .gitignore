@@ -128,3 +128,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+function_calls/*.mjs
+function_calls/node_helper_jobs/*.mjs
+
+!storage/placeholder.txt
+!function_calls/placeholder.txt
