@@ -4,7 +4,9 @@
   "description": "MagicMirror module for using OpenAI Assistant API",
   "main": "MMM-GPTAssistant.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "chmod +x ./postinstall.sh",
+    "postinstall": "sh ./postinstall.sh"
   },
   "repository": {
     "type": "git",

@@ -4,7 +4,7 @@ const functionCalls = [
     description: 'Get the current date and time with the current local timezone.',
     parameters: {},
     callback: async function () {
-      return new Date().toLocaleString()
+      return new Date(Date.now()).toLocaleString()
     }
   },
   {
@@ -12,7 +12,7 @@ const functionCalls = [
     description: 'Get the date of today.',
     parameters: {},
     callback: async function () {
-      return new Date().toLocaleDateString()
+      return new Date(Date.now()).toLocaleDateString()
     }
   },
 

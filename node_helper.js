@@ -13,14 +13,14 @@ const ORGANIZATION = process.env.OPENAI_ORGANIZATION
 
 const OPENAI = (() => {
   try {
-    Log.log(`[GPT] Initializing OpenAI API`)
+    Log.log(`[GPTA] Initializing OpenAI API`)
     return new OpenAI({
       apiKey: API_KEY,
       organization: ORGANIZATION,
       project: PROJECT_ID,
     })
   } catch (error) {
-    Log.error(`[GPT] OpenAI API cannot be initialized - `, error.toString())
+    Log.error(`[GPTA] OpenAI API cannot be initialized - `, error.toString())
     return null
   }
 })()
@@ -34,8 +34,8 @@ module.exports = NodeHelper.create({
   },
 
   fatalError: function (error, payload = null) {
-    Log.log(`[GPT] Fatal Error: `, error.toString())
-    if (payload) Log.log(`[GPT] > `, payload)
+    Log.log(`[GPTA] Fatal Error: `, error.toString())
+    if (payload) Log.log(`[GPTA] > `, payload)
     this.sendSocketNotification('FATAL_ERROR', { error: error.toString() })
   },
 
@@ -70,13 +70,13 @@ module.exports = NodeHelper.create({
     process.on('close', async (code) => {
       clearTimeout(timer)
       timer = null
-      Log.log(`[GPT] Voice Input completed: ${code}`)
+      Log.log(`[GPTA] Voice Input completed: ${code}`)
       const { text = null, error = null } = await this.transcribeVoice({ notificationId, filePath })
 
       this.sendSocketNotification('PROCESS_VOICE_RESULT', { notificationId, response: { text }, error })
     })
     process.stderr.on('data', (data) => {
-      Log.log(`[GPT] Voice Input stderr: ${data}`)
+      Log.log(`[GPTA] Voice Input stderr: ${data}`)
     })
 
     timer = setTimeout(() => {
@@ -94,7 +94,7 @@ module.exports = NodeHelper.create({
       })
       return { text: transcription?.text ?? '' }
     } catch (error) {
-      Log.log(`[GPT] Voice Transcription failed: `, error.toString())
+      Log.log(`[GPTA] Voice Transcription failed: `, error.toString())
       return { error: error.toString() }
     }
   },
@@ -106,43 +106,45 @@ module.exports = NodeHelper.create({
         ret = await this.nodeHelperJobs[ jobName ](payload)
         console.log(">", ret)
       } catch (error) {
-        Log.log(`[GPT] Node Helper Job failed: `, error.toString())
+        Log.log(`[GPTA] Node Helper Job failed: `, error.toString())
         ret = error
       } finally {
         delete this.nodeHelperJobs[ jobName ]
       }
     } else {
-      Log.log(`[GPT] Node Helper Job not found: `, jobName)
+      Log.log(`[GPTA] Node Helper Job not found: `, jobName)
     }
-    Log.log(`[GPT] Node Helper Job completed: `, jobName)
+    Log.log(`[GPTA] Node Helper Job completed: `, jobName)
     this.sendSocketNotification('NODE_HELPER_JOB_RESULT', { jobId, result: ret })
     return ret
   },
 
   removeFile: async function ({ filePath }) {
-    Log.log(`[GPT] Removing file: ${filePath}`)
+    Log.log(`[GPTA] Removing file: ${filePath}`)
     const fp = path.resolve(__dirname, filePath)
     if (fs.existsSync(fp)) {
       fs.unlinkSync(fp)
-      Log.log(`[GPT] File removed: ${fp}`)
+      Log.log(`[GPTA] File removed: ${fp}`)
     } else {
-      Log.log(`[GPT] File not found: ${fp}`)
+      Log.log(`[GPTA] File not found: ${fp}`)
     }
   },
 
   onFunctionCallResponse: async function ({ callId, result }) {
-    Log.log(`[GPT] Function Call Response: `, callId, result)
+    Log.log(`[GPTA] Function Call Response: `, callId, result)
     if (this.functionCalls.has(callId)) {
       this.functionCalls.get(callId).resolve(result)
-      Log.log(`[GPT] Function Call Resolved: `, callId)
+      Log.log(`[GPTA] Function Call Resolved: `, callId)
     } else {
-      Log.log(`[GPT] Function Call not found: `, callId)
+      Log.log(`[GPTA] Function Call not found: `, callId)
     }
     return
   },
 
   response: function ({ notificationId, response=null, request=null, error = null }) {
-    if (error) Log.log(`[GPT] Request Failed: `, error.toString())
+    if (error) Log.log(`[GPTA] Request Failed: `, error.toString())
+      console.log("!", response)
+    if (response?.text?.value) response.text.value = response.text.value.replace(/【\d+†source】/g, '')
     this.sendSocketNotification('RESPONSE', {
       notificationId,
       response,
@@ -153,10 +155,10 @@ module.exports = NodeHelper.create({
   },
 
   uploadFile: async function (fp, purpose = 'assistants') {
-    Log.log(`[GPT] Uploading file: ${fp}`)
+    Log.log(`[GPTA] Uploading file: ${fp}`)
     const filePath = path.resolve(__dirname, fp)
     if (!fs.existsSync(filePath)) {
-      Log.log(`[GPT] File not found: ${filePath}`)
+      Log.log(`[GPTA] File not found: ${filePath}`)
       return false
     }
     try {
@@ -164,11 +166,11 @@ module.exports = NodeHelper.create({
         file: fs.createReadStream(filePath),
         purpose,
       })
-      Log.log(`[GPT] File uploaded: ${f.id} for ${purpose}`)
+      Log.log(`[GPTA] File uploaded: ${f.id} for ${purpose}`)
       return f
     } catch (error) {
-      Log.log(`[GPT] File cannot be uploaded`)
-      Log.log(`[GPT] - Reason: ${error.toString()}`)
+      Log.log(`[GPTA] File cannot be uploaded`)
+      Log.log(`[GPTA] - Reason: ${error.toString()}`)
       return false
     }
   },
@@ -190,10 +192,10 @@ module.exports = NodeHelper.create({
       const mp3 = await OPENAI.audio.speech.create({ model, input, voice, speed, response_format: 'mp3' })
       const buffer = Buffer.from(await mp3.arrayBuffer())
       await fs.promises.writeFile(filePath, buffer)
-      Log.log(`[GPT] Speech created: ${filePath}`)
+      Log.log(`[GPTA] Speech created: ${filePath}`)
       this.sendSocketNotification('SPEECH_RESULT', { notificationId, response: { filePath, url }, timestamp, error: null, requested })
     } catch (error) {
-      Log.log(`[GPT] Speech failed: `, error.toString())
+      Log.log(`[GPTA] Speech failed: `, error.toString())
       this.sendSocketNotification('SPEECH_RESULT', { notificationId, error: error.toString(), response: null, timestamp, requested })
     }
   },
@@ -230,7 +232,7 @@ module.exports = NodeHelper.create({
                   image_file: { file_id: file.id }
                 })
               } else {
-                Log.log(`[GPT] Image file upload failed: `, c.file)
+                Log.log(`[GPTA] Image file upload failed: `, c.file)
               }
               break
             case 'file_search':
@@ -242,11 +244,11 @@ module.exports = NodeHelper.create({
                   tools: [ { type: 'file_search' } ]
                 })
               } else {
-                Log.log(`[GPT] File upload failed: `, c.file)
+                Log.log(`[GPTA] File upload failed: `, c.file)
               }
               break
             default:
-              Log.log(`[GPT] Invalid content type: `, c)
+              Log.log(`[GPTA] Invalid content type: `, c)
               break
           }
         }
@@ -260,7 +262,7 @@ module.exports = NodeHelper.create({
       }
     }
     if (!Array.isArray(formattedContent) || formattedContent.length < 1) {
-      Log.log(`[GPT] Invalid content: `, content)
+      Log.log(`[GPTA] Invalid content: `, content)
     }
 
     const messageTo = toSubAssistant ? 'messageToSubAssistant' : 'messageToMainAssistant'
@@ -281,10 +283,10 @@ module.exports = NodeHelper.create({
     try {
       thread = await OPENAI.beta.threads.retrieve(threadId)
     } catch (error) {
-      if (threadId) Log.log(`[GPT] Thread not found: `, threadId)
+      if (threadId) Log.log(`[GPTA] Thread not found: `, threadId)
       thread = await OPENAI.beta.threads.create()
       threadId = thread.id
-      Log.log(`[GPT] (SUB) New Thread created: `, threadId)
+      Log.log(`[GPTA] (SUB) New Thread created: `, threadId)
     }
     const response = await this.messageTo({ assistantId: this.config.subAssistantId, notificationId, threadId, role, content, attachments })
     await OPENAI.beta.threads.del(threadId)
@@ -299,10 +301,10 @@ module.exports = NodeHelper.create({
     try {
       thread = await OPENAI.beta.threads.retrieve(threadId)
     } catch (error) {
-      if (threadId) Log.log(`[GPT] Thread not found: `, threadId)
+      if (threadId) Log.log(`[GPTA] Thread not found: `, threadId)
       thread = await OPENAI.beta.threads.create()
       threadId = thread.id
-      Log.log(`[GPT] New Thread created: `, threadId)
+      Log.log(`[GPTA] New Thread created: `, threadId)
       this.currentThreadId = threadId
       this.sendSocketNotification('UPDATE_CURRENT_THREAD', threadId)
     }
@@ -342,11 +344,11 @@ module.exports = NodeHelper.create({
           eventHandler.emit('event', event)
         }
       } catch (error) {
-        Log.log(`[GPT] Thread ${threadId} stream failed: `, error.toString())
+        Log.log(`[GPTA] Thread ${threadId} stream failed: `, error.toString())
         throw error
       }
     } catch (error) {
-      Log.log(`[GPT] Message to Assistant failed: `, error.toString())
+      Log.log(`[GPTA] Message to Assistant failed: `, error.toString())
       Log.error(error)
       throw error
     }
@@ -379,14 +381,14 @@ module.exports = NodeHelper.create({
       timeOut,
     })
     this.sendSocketNotification('FUNCTION_CALL', { callId, payload })
-    Log.log(`[GPT] Function call: ${callId} - ${payload.name}`)
+    Log.log(`[GPTA] Function call: ${callId} - ${payload.name}`)
     return promise
   },
 
 
 
   refreshFunctionCallsToAssistant: async function ({ assistantId, functionCalls = [] }) {
-    Log.log(`[GPT] Updating Function Calls to Assistant: ${assistantId}`)
+    Log.log(`[GPTA] Updating Function Calls to Assistant: ${assistantId}`)
     try {
       const assistant = await OPENAI.beta.assistants.retrieve(assistantId)
       const tools = assistant?.tools ?? []
@@ -399,26 +401,45 @@ module.exports = NodeHelper.create({
           type: 'function',
           function: { name, description, parameters }
         })
-        Log.log(`[GPT] Added Function Call: ${name}`)
+        Log.log(`[GPTA] Added Function Call: ${name}`)
       }
       const updated = await OPENAI.beta.assistants.update(assistantId, { tools: newTools })
-      Log.log(`[GPT] Function Calls updated to Assistant: ${assistantId}`)
+      Log.log(`[GPTA] Function Calls updated to Assistant: ${assistantId}`)
       this.sendSocketNotification('UPDATE_MAIN_ASSISTANT_SUCCESS')
     } catch (err) {
-      Log.error(`[GPT] Error during Main Assistant update: `, err.toString())
+      Log.error(`[GPTA] Error during Main Assistant update: `, err.toString())
       this.sendSocketNotification('UPDATE_MAIN_ASSISTANT_FAILED')
     }
   },
 
   initialize: async function ({ config, threadId = null }) {
-    Log.log(`[GPT] Initializing GPT`)
+    Log.log(`[GPTA] Initializing GPTAssistant.`)
 
     if (Object.keys(this.config).length > 0) {
-      Log.error(`[GPT] GPTore already initialized. This module should be instantiated only once`)
+      Log.error(`[GPTA] GPTAssistant already initialized. This module should be instantiated only once.`)
       return
     }
     this.config = config
     const { secureVectorStores = [] } = this.config
+
+    // Check Assistant Instances
+    try {
+      const assistants = [this.config.mainAssistantId, this.config.subAssistantId]
+      for (const id of assistants) {
+        const assistant = await OPENAI.beta.assistants.retrieve(id)
+        if (assistant?.id) {
+          Log.log(`[GPTA] Assistant found: ${assistant.name} (${assistant.id})`)
+          const vs_ids = assistant?.tool_resources?.file_search?.vector_store_ids ?? []
+          for (const vsId of vs_ids) {
+            Log.log(`[GPTA] Assistant Vector Store found. It will be secured.: ${vsId}`)
+            secureVectorStores.push(vsId)
+          }
+        }
+      }
+    } catch (error) {
+      Log.error(`[GPTA] Error during Assistant check: `, error.toString())
+    }
+
 
     // Clean up VectorStores
     try {
@@ -440,9 +461,9 @@ module.exports = NodeHelper.create({
         }
         for (const vs of vsList) {
           if (secureVectorStores.includes(vs.id)) {
-            Log.log(`[GPT] VectorStore to keep: ${vs.id}`)
+            Log.log(`[GPTA] VectorStore to keep: ${vs.id}`)
           } else {
-            Log.log(`[GPT] VectorStore to delete: ${vs.id}`)
+            Log.log(`[GPTA] VectorStore to delete: ${vs.id}`)
             toDelete.add(vs.id)
           }
         }
@@ -452,11 +473,11 @@ module.exports = NodeHelper.create({
 
       for (const vsId of [ ...toDelete ]) {
         await OPENAI.beta.vectorStores.del(vsId)
-        Log.log(`[GPT] Deleted VectorStore ${vsId}`)
+        Log.log(`[GPTA] Deleted VectorStore ${vsId}`)
       }
-      Log.log(`[GPT] VectorStore cleanup completed`)
+      Log.log(`[GPTA] VectorStore cleanup completed`)
     } catch (error) {
-      Log.error(`[GPT] Error during VectorStore cleanup: `, error.toString())
+      Log.error(`[GPTA] Error during VectorStore cleanup: `, error.toString())
     }
 
     // Clean up Files, keep the vectorStoreFiles
@@ -473,27 +494,32 @@ module.exports = NodeHelper.create({
       for await (const f of (allFiles?.data ?? [])) {
         if (f.id && !toKeep.has(f.id)) {
           await OPENAI.files.del(f.id)
-          Log.log(`[GPT] File to delete: ${f.id}`)
+          Log.log(`[GPTA] File to delete: ${f.id}`)
         } else {
-          Log.log(`[GPT] File to keep: ${f.id}`)
+          Log.log(`[GPTA] File to keep: ${f.id}`)
         }
       }
     } catch (error) {
-      Log.error(`[GPT] Error during File cleanup in VectorStore ${vsId}: `, error.toString())
+      Log.error(`[GPTA] Error during File cleanup in VectorStore ${vsId}: `, error.toString())
     }
-    Log.log(`[GPT] File cleanup completed`)
+    Log.log(`[GPTA] File cleanup completed`)
 
     // Get Last Thread
     if (threadId) {
-      const thread = await OPENAI.beta.threads.retrieve(threadId)
-      if (thread?.id) {
-        this.currentThreadId = thread.id
-        Log.log(`[GPT] Current Thread: ${thread.id}`)
-      } else {
-        Log.log(`[GPT] Current Thread not found: ${threadId}`)
+      try {
+        const thread = await OPENAI.beta.threads.retrieve(threadId)
+        if (thread?.id) {
+          this.currentThreadId = thread.id
+          Log.log(`[GPTA] The last Thread: ${thread.id}`)
+        } else {
+          Log.log(`[GPTA] The last thread not found: ${threadId}`)
+        }
+      } catch (error) {
+        Log.log(`[GPTA] Error during the last thread check: `, error.toString())
+        Log.log(`[GPTA] There is no previous thread. A new thread will be created.`)
       }
     } else {
-      Log.log(`[GPT] No Current Thread`)
+      Log.log(`[GPTA] The last thread will not be used.`)
     }
 
     await this.registerNodeHelperJobs()
@@ -505,13 +531,14 @@ module.exports = NodeHelper.create({
     const { functionCallFiles = [] } = this.config
     for (const file of functionCallFiles) {
       try {
-        const filePath = path.resolve(__dirname, 'function_calls', 'node_helper_jobs', file)
+        const filename = `_${file}.mjs`
+        const filePath = path.resolve(__dirname, 'function_calls', 'node_helper_jobs', filename )
         if (fs.existsSync(filePath)) {
           const { nodeHelperJobs } = await import(filePath)
           this.nodeHelperJobs = { ...this.nodeHelperJobs, ...nodeHelperJobs }
         }
       } catch (error) {
-        Log.log(`[GPT] Node Helper Job registration failed: `, error.toString())
+        Log.log(`[GPTA] Node Helper Job registration failed: `, error.toString())
       }
     }
   }

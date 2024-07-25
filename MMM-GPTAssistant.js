@@ -1,8 +1,8 @@
 Module.register("MMM-GPTAssistant", {
   defaults: {
     secureVectorStores: [],
-    mainAssistantId: 'asst_7dIGXATJ3ao5SNtAjnPi5BMu',
-    helperAssistantId: 'asst_JIcXentXQ5qjunoSWNlwgFFL',
+    mainAssistantId: '',
+    subAssistantId: '',
     continueLastThread: true,
     functionCalls: [
       {
@@ -15,7 +15,7 @@ Module.register("MMM-GPTAssistant", {
       },
 
     ],
-    functionCallFiles: [ 'default.mjs' ],
+    functionCallFiles: [ 'default' ],
     functionCallTimeout: 1000 * 60 * 5,
     useVoiceOutput: true,
     voiceOutputModel: 'tts-1',
@@ -99,15 +99,16 @@ Module.register("MMM-GPTAssistant", {
     this.functionCalls = new Map()
     this.nodeHelperJobs = new Map()
     this.requestedNotifications = new Map()
+    if (!this.config.subAssistantId) this.config.subAssistantId = this.config.mainAssistantId
     if (!this.config.continueLastThread && localStorage.getItem('GPT_THREAD')) {
       localStorage.removeItem('GPT_THREAD')
     }
     this.currentThreadId = localStorage.getItem('GPT_THREAD') || null
-    if (this.config.continueLastThread) Log.log(`[GPT] Will continue on the last thread: ${this.currentThreadId}`)
+    if (this.config.continueLastThread && this.currentThreadId) Log.log(`[GPTA] Will continue on the last thread: ${this.currentThreadId}`)
   },
 
   getStyles: function () {
-    return ['MMM-GPT.css']
+    return ['MMM-GPTAssistant.css']
   },
 
   getDom: function () {
@@ -124,18 +125,14 @@ Module.register("MMM-GPTAssistant", {
   updateCurrentThreadId: function (threadId) {
     this.currentThreadId = threadId
     localStorage.setItem('GPT_THREAD', threadId)
-    Log.log(`[GPT] Current thread ID: ${threadId}`)
+    Log.log(`[GPTA] Current thread ID: ${threadId}`)
   },
 
   onInitialized: function (payload) {
-<<<<<<< HEAD:MMM-GPTAssistant.js
     Log.log(`[GPTA] OpenAI API Initialized`)
-=======
-    Log.log(`[GPT] OpenAI API Initialized`)
     const { threadId } = payload
     this.updateCurrentThreadId(threadId)
 
->>>>>>> e76792d (dev):MMM-GPT.js
     //this.sendNotification('GPT_API_READY')
     const tools = []
     this.functionCalls.forEach(({ name, description, parameters }) => {
@@ -177,24 +174,16 @@ Module.register("MMM-GPTAssistant", {
       }
       this.requestedNotifications.delete(notificationId)
     }
-<<<<<<< HEAD:MMM-GPTAssistant.js
-    Log.log(`[GPTA] Request Failed: `, error)
-  },
-
-  onUpdateMainAssistantSuccess: function () {
-    Log.log(`[GPTA] Main Assistant Updated. Now ready to assist!`)
-=======
-    Log.log(`[GPT] Finish: `, response, error)
+    Log.log(`[GPTA] Finish: `, response, error)
   },
 
   onRequestFailed: function ({ notificationId, error, response, timestamp }) {
     this.response({ notificationId, error, response, timestamp })
-    Log.log(`[GPT] Request Failed: `, error)
+    Log.log(`[GPTA] Request Failed: `, error)
   },
 
   onUpdateMainAssistantSuccess: function (payload) {
-    Log.log(`[GPT] Main Assistant Updated. Now ready to assist!`)
->>>>>>> e76792d (dev):MMM-GPT.js
+    Log.log(`[GPTA] Main Assistant Updated. Now ready to assist!`)
     this.sendNotification('GPT_READY')
     /* test */
     //this.test()
@@ -202,7 +191,7 @@ Module.register("MMM-GPTAssistant", {
 
   onFunctionCall: async function (delivered) {
     const { callId, payload } = delivered
-    Log.log('[GPT] FunctionCall received:', payload)
+    Log.log('[GPTA] FunctionCall received:', payload)
     const response = (result) => {
       this.sendSocketNotification('FUNCTION_CALL_RESPONSE', { callId, result: String(result) })
     }
@@ -218,7 +207,7 @@ Module.register("MMM-GPTAssistant", {
       try {
         const m = MM.getModules().find(m => m.identifier === moduleId) ?? this
         const result = await callback({ helper: new FunctionCallHelper(m), parameters, module: m })
-        Log.log(`[GPT] FunctionCall ${name} completed. - "${result}"`)
+        Log.log(`[GPTA] FunctionCall ${name} completed. - "${result}"`)
         return result
       } catch (error) {
         const msg = `FunctionCall ${name} failed.`
@@ -247,16 +236,16 @@ Module.register("MMM-GPTAssistant", {
       const audio = new Audio(url)
       const { promise, resolve } = Promise.withResolvers()
       audio.oncanplaythrough = () => {
-        Log.log(`[GPT] Audio playback started`)
+        Log.log(`[GPTA] Audio playback started`)
         if (!onEnd) resolve(true)
         audio.play()
       }
       audio.onended = () => {
-        Log.log(`[GPT] Audio playback ended`)
+        Log.log(`[GPTA] Audio playback ended`)
         if (onEnd) resolve(true)
       }
       audio.onerror = (e) => {
-        Log.error(`[GPT] Audio playback error`, e)
+        Log.error(`[GPTA] Audio playback error`, e)
         resolve(false)
       }
       return promise
@@ -278,7 +267,7 @@ Module.register("MMM-GPTAssistant", {
         this.sendSocketNotification('REMOVE_FILE', { filePath: response.filePath })
       }
     } else {
-      Log.log(`[GPT] onSpeechResult: No receiver found for ${notificationId}`)
+      Log.log(`[GPTA] onSpeechResult: No receiver found for ${notificationId}`)
     }
   },
 
@@ -383,7 +372,7 @@ Module.register("MMM-GPTAssistant", {
       iconify.src = ICONIFY_URL
       document.head.appendChild(iconify)
       iconify.onload = () => {
-        Log.log(`[GPT] Iconify loaded`)
+        Log.log(`[GPTA] Iconify loaded`)
         resolve(true)
       }
     } else {
@@ -397,20 +386,17 @@ Module.register("MMM-GPTAssistant", {
     const { functionCallFiles } = this.config
     if (Array.isArray(functionCallFiles)) {
       functionCallFiles.forEach(async (name) => {
-        const mjs = `./function_calls/${name}`
+        const filename = `${name}.mjs`
+        const mjs = `./function_calls/${filename}`
         try {
           const { functionCalls } = await import(mjs)
           functionCalls.forEach((f) => {
-            Log.log(`[GPTA] Loaded function call: ${f.name} from ${name}`)
+            Log.log(`[GPTA] Loaded function call: ${f.name} from ${filename}`)
             this.functionCalls.set(f.name, f)
           })
         } catch (error) {
-<<<<<<< HEAD:MMM-GPTAssistant.js
           Log.log(`[GPTA] Error loading function calls: ${name}`, error.toString())
-=======
-          Log.log(`[GPT] Error loading function calls: ${name}`, error.toString())
           Log.error(error)
->>>>>>> e76792d (dev):MMM-GPT.js
         }
       })
     }
