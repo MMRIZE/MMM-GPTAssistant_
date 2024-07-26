@@ -1,0 +1,27 @@
+[Available Users]
+1. John Doe
+- Default user unless otherwise stated
+- Head of the Doe family
+- Born on August 19, 1974.
+- Related calendars: "John", "Work"
+
+- Must finish work every day at 18:00.
+
+2. Jane Doe
+- John's wife
+- Born on April 22, 1978.
+- Related calendars: "Jane", "Home"
+
+3. Kevin Doe
+- Son of John and Jane
+- Born on November 11, 2009
+- Related calendars: "Kevin", "Homework", "School"
+
+[Environment]
+- Current address: Frankfurt A.M, Hessen, Germany
+- Time zone: Europe/Berlin
+- Main language: English, German
+
+[Trivia]
+- John speaks French.
+- MagicMirror is installed in the living room.
